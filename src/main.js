@@ -8,20 +8,23 @@ import {
   loadTodos, addTodo, toggleTodo, deleteTodo, deadlineText,
   loadHistory
 } from './storage.js'
-import { initTimer, startFocus, onBack } from './timer.js'
+import { initTimer, startFocus, onBack, preloadWallpaper } from './timer.js'
 
 const wl = ['一','二','三','四','五','六','日']
 const emojis = ['📚','💪','🏃','🧘','💧','✍️','🎯','🌱','🎵','🍎','💤','🧹','📝','💡','🎨','🤝']
 
 // ===== Themes =====
 const THEMES = {
-  lavender:{ name:'淡雅', bg:'#f4edf8', surface:'#ffffff', surface2:'#f0eaf6', border:'#e6daf0', text:'#3d3055', textDim:'#a898c0', primary:'#e8788a', primaryGlow:'rgba(232,120,138,0.25)', success:'#5cc9b0', warning:'#f0c060', purple:'#b8a0d8' },
-  dark:   { name:'暗夜', bg:'#0f0f1a', surface:'#1a1a2e', surface2:'#222240', border:'#2a2a3e', text:'#eaeaea', textDim:'#8888aa', primary:'#e94560', primaryGlow:'rgba(233,69,96,0.35)', success:'#4ecca3', warning:'#f0a500', purple:'#6c5ce7' },
-  forest: { name:'森林', bg:'#0d1a12', surface:'#172e1f', surface2:'#1f4029', border:'#2a4a30', text:'#e0f0e0', textDim:'#7a9a7a', primary:'#4ecca3', primaryGlow:'rgba(78,204,163,0.35)', success:'#2ecc71', warning:'#f0c040', purple:'#27ae60' },
-  ocean:  { name:'海洋', bg:'#0a1628', surface:'#162d50', surface2:'#1a3a6a', border:'#2a4a7a', text:'#e0ecff', textDim:'#7a9ac0', primary:'#0984e3', primaryGlow:'rgba(9,132,227,0.35)', success:'#00cec9', warning:'#fdcb6e', purple:'#6c5ce7' },
-  warm:   { name:'暖橙', bg:'#1a1410', surface:'#2e2218', surface2:'#3d2e20', border:'#4a3828', text:'#f0e8e0', textDim:'#a09080', primary:'#f0a500', primaryGlow:'rgba(240,165,0,0.35)', success:'#e17055', warning:'#fab1a0', purple:'#d63031' },
-  sakura: { name:'樱花', bg:'#1a1018', surface:'#2e1a2a', surface2:'#3d2438', border:'#4a3042', text:'#f0e0ec', textDim:'#a08098', primary:'#fd79a8', primaryGlow:'rgba(253,121,168,0.35)', success:'#ffeaa7', warning:'#dfe6e9', purple:'#a29bfe' },
-  light:  { name:'极简', bg:'#f5f6fa', surface:'#fff', surface2:'#e8e9f0', border:'#d0d2d8', text:'#2d3436', textDim:'#888', primary:'#e94560', primaryGlow:'rgba(233,69,96,0.25)', success:'#00b894', warning:'#e17055', purple:'#6c5ce7' }
+  lavender:{ name:'淡雅',   bg:'#f4edf8', surface:'#fff',    surface2:'#f0eaf6', border:'#e6daf0', text:'#3d3055', textDim:'#a898c0', primary:'#e8788a', primaryGlow:'rgba(232,120,138,0.25)', success:'#5cc9b0', warning:'#f0c060', purple:'#b8a0d8' },
+  sky:    { name:'晴空',   bg:'#e8f4fd', surface:'#fff',    surface2:'#e0eef8', border:'#d0e4f2', text:'#2c4050', textDim:'#80a0b8', primary:'#58a8d8', primaryGlow:'rgba(88,168,216,0.25)',  success:'#5cc9b0', warning:'#f0c060', purple:'#8898d8' },
+  peach:  { name:'蜜桃',   bg:'#fdf3ee', surface:'#fff',    surface2:'#fceee8', border:'#f0dcd2', text:'#4a3530', textDim:'#b89888', primary:'#f09878', primaryGlow:'rgba(240,152,120,0.25)', success:'#68c8a0', warning:'#e8b848', purple:'#c898b8' },
+  mint:   { name:'薄荷',   bg:'#edf8f2', surface:'#fff',    surface2:'#e6f4ec', border:'#d0e8d8', text:'#2d4038', textDim:'#88a898', primary:'#58c098', primaryGlow:'rgba(88,192,152,0.25)',  success:'#48b888', warning:'#e8c848', purple:'#88a8c8' },
+  cream:  { name:'奶昔',   bg:'#faf8f4', surface:'#fff',    surface2:'#f5f2ec', border:'#e8e2d8', text:'#403830', textDim:'#b0a090', primary:'#d89860', primaryGlow:'rgba(216,152,96,0.25)',  success:'#68b898', warning:'#e0b848', purple:'#a898b8' },
+  cloud:  { name:'云朵',   bg:'#f6f8fa', surface:'#fff',    surface2:'#eff2f5', border:'#e0e4e8', text:'#384048', textDim:'#98a0a8', primary:'#88a0c8', primaryGlow:'rgba(136,160,200,0.25)', success:'#68b898', warning:'#e0b860', purple:'#9898c8' },
+  coral:  { name:'珊瑚',   bg:'#fef5f2', surface:'#fff',    surface2:'#fdf0ec', border:'#f4ddd6', text:'#453530', textDim:'#c09888', primary:'#f08068', primaryGlow:'rgba(240,128,104,0.25)', success:'#58c0a0', warning:'#e8c050', purple:'#c890a8' },
+  sakura: { name:'樱花',   bg:'#fdf2f6', surface:'#fff',    surface2:'#fbeaf0', border:'#f0d8e2', text:'#453540', textDim:'#b898a0', primary:'#f090a8', primaryGlow:'rgba(240,144,168,0.25)', success:'#68c0a8', warning:'#e8c060', purple:'#b898c8' },
+  light:  { name:'极简',   bg:'#f5f6fa', surface:'#fff',    surface2:'#e8e9f0', border:'#d0d2d8', text:'#2d3436', textDim:'#888',    primary:'#e94560', primaryGlow:'rgba(233,69,96,0.25)',   success:'#00b894', warning:'#e17055', purple:'#6c5ce7' },
+  dark:   { name:'暗夜',   bg:'#0f0f1a', surface:'#1a1a2e', surface2:'#222240', border:'#2a2a3e', text:'#eaeaea', textDim:'#8888aa', primary:'#e94560', primaryGlow:'rgba(233,69,96,0.35)',  success:'#4ecca3', warning:'#f0a500', purple:'#6c5ce7' }
 }
 
 function applyTheme(key) {
@@ -60,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const s = loadSettings()
   applyTheme(s.theme || 'lavender')
 
+  preloadWallpaper()
   renderAll()
   renderStats('day')
 })

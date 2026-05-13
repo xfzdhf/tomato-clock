@@ -8,6 +8,66 @@ const C = 2 * Math.PI * 88
 let chimeCtx = null
 let onBackCallback = null
 
+// ---- Wallpaper system ----
+const WALLPAPERS = {
+  nature: [
+    'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=400&q=80',
+    'https://images.unsplash.com/photo-1508610041836-7d7b4d5c5b52?w=400&q=80',
+    'https://images.unsplash.com/photo-1496062031456-07b4f162a3f1?w=400&q=80',
+    'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=400&q=80',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&q=80',
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80'
+  ],
+  cozy: [
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
+    'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+    'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=400&q=80',
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&q=80',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80'
+  ],
+  cute: [
+    'https://images.unsplash.com/photo-1478098711619-5ab0b478d6e6?w=400&q=80',
+    'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400&q=80',
+    'https://images.unsplash.com/photo-1507149833265-60c372daea22?w=400&q=80',
+    'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=400&q=80',
+    'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=80',
+    'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&q=80'
+  ]
+}
+const WALLPAPER_LABELS = { nature: '清新自然', cozy: '治愈系', cute: '萌宠' }
+let currentWallpaperTheme = 'nature'
+let lastImageUrl = ''
+
+function applyWallpaper() {
+  const imgs = WALLPAPERS[currentWallpaperTheme]
+  // pick a random image different from the last one (if multiple available)
+  let url
+  if (imgs.length > 1) {
+    const pool = imgs.filter(u => u !== lastImageUrl)
+    url = pool[Math.floor(Math.random() * pool.length)]
+  } else {
+    url = imgs[0]
+  }
+  lastImageUrl = url
+  const bg = document.getElementById('wallpaper-bg')
+  if (!bg) return
+  // gradient underneath + image on top; gradient shows while image loads
+  bg.style.backgroundImage = 'url(' + url + '), linear-gradient(160deg, #3a5068 0%, #2c4050 40%, #3a4858 100%)'
+  // preload for next time
+  new Image().src = url
+}
+
+function switchWallpaper() {
+  const themes = Object.keys(WALLPAPERS)
+  const idx = themes.indexOf(currentWallpaperTheme)
+  currentWallpaperTheme = themes[(idx + 1) % themes.length]
+  applyWallpaper()
+  // brief toast
+  const btn = document.getElementById('btn-wallpaper')
+  if (btn) { btn.textContent = '✨'; setTimeout(() => { btn.textContent = '🖼' }, 600) }
+}
+
 export const state = {
   timerMode: 'countdown',  // 'countdown' | 'stopwatch'
   // countdown props
@@ -25,6 +85,14 @@ export const state = {
 }
 
 export function onBack(fn) { onBackCallback = fn }
+
+// Preload a wallpaper at app startup so first timer open is instant
+export function preloadWallpaper() {
+  const imgs = WALLPAPERS[currentWallpaperTheme]
+  const url = imgs[Math.floor(Math.random() * imgs.length)]
+  lastImageUrl = url
+  new Image().src = url
+}
 
 export function initTimer() {
   const s = loadSettings()
@@ -45,6 +113,7 @@ export function startFocus(target) {
   initTimer()
   document.getElementById('focus-target-name').textContent =
     (target.icon || '') + ' ' + target.name
+  applyWallpaper()
   document.getElementById('timer-overlay').style.display = 'flex'
 }
 
@@ -62,6 +131,7 @@ function bindEvents() {
   document.getElementById('btn-play').addEventListener('click', toggle)
   document.getElementById('btn-skip').addEventListener('click', secondaryAction)
   document.getElementById('btn-back').addEventListener('click', goBack)
+  document.getElementById('btn-wallpaper').addEventListener('click', switchWallpaper)
   document.getElementById('btn-dur-minus').addEventListener('click', () => adjustDuration(-5))
   document.getElementById('btn-dur-plus').addEventListener('click', () => adjustDuration(5))
 
@@ -124,6 +194,8 @@ function start() {
 
   state.timerId = setInterval(tick, 200)
 
+  document.querySelector('.timer-container').classList.add('glow')
+
   const playBtn = document.getElementById('btn-play')
   playBtn.textContent = '⏸ 暂停'
   playBtn.style.background = 'var(--surface2)'; playBtn.style.boxShadow = 'none'
@@ -146,6 +218,7 @@ function start() {
 
 function pause() {
   state.running = false; clearInterval(state.timerId); state.timerId = null
+  document.querySelector('.timer-container').classList.remove('glow')
   const playBtn = document.getElementById('btn-play')
   playBtn.textContent = '▶ 继续'
   playBtn.style.background = 'var(--primary)'
@@ -277,6 +350,7 @@ function finishStopwatch() {
 
 // ---- Reset UI state after completion/stop ----
 function resetUI() {
+  document.querySelector('.timer-container').classList.remove('glow')
   document.getElementById('mode-toggle').style.opacity = '1'
   document.getElementById('mode-toggle').style.pointerEvents = 'auto'
 
@@ -324,17 +398,13 @@ function refreshUI() {
   updateRing()
 
   const ring = document.getElementById('ring-progress')
-  const style = getComputedStyle(document.documentElement)
-
-  if (state.timerMode === 'stopwatch') {
-    ring.style.stroke = style.getPropertyValue('--purple').trim()
-  } else if (state.mode === 'focus') {
-    ring.style.stroke = style.getPropertyValue('--primary').trim()
-  } else if (state.mode === 'shortBreak') {
-    ring.style.stroke = style.getPropertyValue('--success').trim()
-  } else {
-    ring.style.stroke = style.getPropertyValue('--warning').trim()
-  }
+  // white ring for glassmorphism look; vary glow intensity by mode
+  const glowColor = state.timerMode === 'stopwatch' ? 'rgba(200,180,255,0.6)'
+    : state.mode === 'focus' ? 'rgba(255,255,255,0.6)'
+    : state.mode === 'shortBreak' ? 'rgba(180,255,220,0.6)'
+    : 'rgba(255,220,180,0.6)'
+  ring.style.stroke = '#fff'
+  ring.style.filter = 'drop-shadow(0 0 14px ' + glowColor + ')'
 
   // session dots (countdown only)
   const dots = document.getElementById('session-dots')
