@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="32" fill="url(#bg)"/>
+  <circle cx="96" cy="88" r="48" fill="none" stroke="#2a2a3e" stroke-width="8"/>
+  <circle cx="96" cy="88" r="48" fill="none" stroke="#e94560" stroke-width="8"
+    stroke-dasharray="226" stroke-dashoffset="56" stroke-linecap="round"
+    transform="rotate(-90 96 88)"/>
+  <text x="96" y="98" text-anchor="middle" fill="#eaeaea" font-size="28" font-weight="bold" font-family="system-ui">🍅</text>
+  <text x="96" y="160" text-anchor="middle" fill="#888" font-size="16" font-family="system-ui">时流</text>
+</svg>
